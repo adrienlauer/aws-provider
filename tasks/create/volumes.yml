@@ -1,9 +1,17 @@
 ---
-- name: "Iterating over instance(s) and volume(s)"
+- name: "Ensure EBS volume(s) exist and are attached to instance(s)"
   loop: "{{ ek_ec2_instance_info.tagged_instances | product(ek_config.params.volumes | dict2items) | list }}"
   loop_control:
     loop_var: vol_item
-  include: volume.yml
+  when: vol_item.1.value['ebs'] is defined
+  include: volume_ebs.yml
+
+- name: "Ensure EFS volume(s) exist"
+  loop: "{{ ek_ec2_instance_info.tagged_instances | product(ek_config.params.volumes | dict2items) | list }}"
+  loop_control:
+    loop_var: vol_item
+  when: vol_item.1.value['efs'] is defined and vol_item.1.value['ebs'] is not defined
+  include: volume_efs.yml
 
 - debug:
     verbosity: 1
